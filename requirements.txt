@@ -1,0 +1,7 @@
+numpy
+scipy
+opencv_python
+lap
+cython
+cython_bbox
+ultralytics==8.0.115
