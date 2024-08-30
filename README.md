@@ -13,3 +13,8 @@ Before running code download yolov8 weights from [here](https://docs.ultralytics
 ```
 python app.py --video video/video.mp4 --object_detector yolo/yolov8m.pt
 ```
+Code only detects and track 'car' class. If you want to track another calss or number of classes, edit line 41 in app.py.
+
+```
+if result.names[box.cls[0].item()] == 'car':
+```
