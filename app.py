@@ -38,7 +38,7 @@ def main(min_confidence, nms_max_overlap,
             detection_list = []
 
             for box in result.boxes:
-                if result.names[box.cls[0].item()] != 'car':
+                if result.names[box.cls[0].item()] == 'car':
                     box_coord = box.xyxy[0].tolist()
                     # converting boxes into [x,y,w,h] (x,y)-top left corner
                     #box_coord = [box_coord[0], box_coord[1], box_coord[2] - box_coord[0], box_coord[3] - box_coord[1]]
