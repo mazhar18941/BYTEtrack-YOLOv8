@@ -5,6 +5,9 @@ low score detections for tracking.
 # Requirements
 Python =< 3.9
 ```
+git clone https://github.com/mazhar18941/BYTEtrack-YOLOv8.git
+```
+```
 pip install -r requirements.txt
 ```
 
