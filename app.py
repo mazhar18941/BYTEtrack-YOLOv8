@@ -92,7 +92,7 @@ def main(min_confidence, nms_max_overlap,
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
         else:
-            continue
+            break
 
     cap.release()
     cv2.destroyAllWindows()
