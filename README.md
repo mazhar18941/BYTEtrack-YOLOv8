@@ -1,8 +1,7 @@
 # Introduction
-This repo contains code for Object tracking using BYTEtrack and Yolov8. BYTE is a simple tracker which use both high and 
-low score detections for tracking.
+This repo contains code for Object tracking using BYTEtrack and Yolov8. BYTE is a simple tracker which use both high and low score detections for tracking.
 
-![video](https://github.com/mazhar18941/BYTEtrack-YOLOv8/blob/main/output_video/bytetrack.avi)
+![video](https://github.com/user-attachments/assets/c82d486a-93e8-4c10-a38d-cf8fe2cecf3e)
 
 # Requirements
 Python =< 3.9
