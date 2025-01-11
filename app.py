@@ -1,10 +1,10 @@
 import numpy as np
 import cv2
 import argparse
+import time
 from ultralytics import YOLO
 
-import preprocessing
-from byte_tracker import BYTETracker
+from tracker.byte_tracker import BYTETracker
 
 
 def main(min_confidence, nms_max_overlap,
@@ -23,12 +23,16 @@ def main(min_confidence, nms_max_overlap,
 
     cap = cv2.VideoCapture(video)
 
+    fourcc = cv2.VideoWriter_fourcc(*'MJPG')
+    out = cv2.VideoWriter('bytetrack.mp4', fourcc, 25.00, (1280, 720))
+
     # Check if camera opened successfully
     if (cap.isOpened() == False):
         print("Error opening video file")
 
     # Read until video is completed
     while (cap.isOpened()):
+        start = time.time()
         ret, image = cap.read()
         if ret == True:
 
@@ -36,20 +40,25 @@ def main(min_confidence, nms_max_overlap,
             result = results[0]
             box_coord_list = []
             detection_list = []
+            box_class_list = []
+            class_dict = {}
 
             for box in result.boxes:
-                if result.names[box.cls[0].item()] == 'car':
+                if result.names[box.cls[0].item()] in ['car','truck']:
                     box_coord = box.xyxy[0].tolist()
                     # converting boxes into [x,y,w,h] (x,y)-top left corner
                     #box_coord = [box_coord[0], box_coord[1], box_coord[2] - box_coord[0], box_coord[3] - box_coord[1]]
                     box_coord = [round(x) for x in box_coord]
                     box_conf = round(box.conf[0].item(), 2)
+                    box_id = int(round(box.cls[0].item(),0))
                     box_coord.append(box_conf)
-                    # box_class = result.names[box.cls[0].item()]
+                    box_coord.append(box_id)
+                    #box_class_list.append(result.names[box.cls[0].item()])
+
 
                     detection_list.append(box_coord)
-
             detections = np.array([detection_list])
+            print(np.shape(detections))
             i = int(0)
             indexIDs = []
             # Update tracker.
@@ -58,18 +67,22 @@ def main(min_confidence, nms_max_overlap,
 
                 online_tlwhs = []
                 online_ids = []
+                online_class_ids = []
                 online_scores = []
-                for t in online_targets:
+                for b,t in enumerate(online_targets):
                     tlwh = t.tlwh
                     tlbr = t.tlbr
                     tid = t.track_id
+                    cid = t.class_id
                     vertical = tlwh[2] / tlwh[3] > args.aspect_ratio_thresh
                     if tlwh[2] * tlwh[3] > args.min_box_area and not vertical:
                         online_tlwhs.append(tlwh)
                         online_ids.append(tid)
                         online_scores.append(t.score)
+                        online_class_ids.append(t.class_id)
 
                         bbox = tlbr
+
                         bbox = [int(b) for b in bbox]
 
                         indexIDs.append(int(tid))
@@ -78,16 +91,21 @@ def main(min_confidence, nms_max_overlap,
 
                         cv2.rectangle(image, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (color), thickness=2)
                         cv2.putText(image, str(tid), (bbox[0], bbox[1]), 0, 5e-3 * 150, (color), 2)
+                        cv2.putText(image, str(result.names[cid]), (bbox[0]+30, bbox[1]), 0, 5e-3 * 150, (color), 2)
                         # cv2.imwrite(savefilepath+str(track.track_id)+".jpg", image[bbox[1]:bbox[3], bbox[0]:bbox[2]])
                         i += 1
 
                 count = len(set(counter))
-                cv2.putText(image, "Car Counter:" + str(count), (int(20), int(120)), 0, 5e-3 * 200, (0, 0, 255), 2)
+                cv2.putText(image, "VEHICLE COUNTER:" + str(count), (int(20), int(90)), 0, 5e-3 * 200, (0, 0, 255), 2)
 
+                end = time.time()
+                fps = int(round(1/(end-start), 0))
+                cv2.putText(image, "FPS:" + str(fps), (int(20), int(120)), 0, 5e-3 * 200, (0, 0, 255), 2)
                 # image_r = cv2.resize(image, (1280, 720))
                 cv2.namedWindow("YOLO8_BYTEtrack", cv2.WINDOW_NORMAL)
                 cv2.resizeWindow('YOLO8_BYTEtrack', 1024, 768)
                 cv2.imshow("YOLO8_BYTEtrack", image)
+                out.write(image)
                 # Press Q on keyboard to exit
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
@@ -95,6 +113,7 @@ def main(min_confidence, nms_max_overlap,
             break
 
     cap.release()
+    out.release()
     cv2.destroyAllWindows()
 
 
@@ -124,7 +143,7 @@ def parse_args():
 
     parser.add_argument(
         "--object_detector", help="Path to  YOLOv8 Model "
-                                        "", type=str, default="/home/mazhar/BYTEtrack/yolo/yolov8m.pt")
+                                        "", type=str, default="/home/mazhar/BYTEtrack/yolo/yolo11m.pt")
     parser.add_argument(
         "--video", help="Path to Video  "
                                         "", type=str, default='/home/mazhar/BYTEtrack/video/video.mp4')
